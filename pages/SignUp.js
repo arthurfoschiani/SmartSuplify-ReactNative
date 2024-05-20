@@ -6,6 +6,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Dimensions,
+  Alert
 } from 'react-native';
 import { useState } from 'react';
 import Form from '../components/Form';
@@ -33,17 +34,17 @@ const SignUp = ({ setLogado, auth, setNewUser, db }) => {
     const { nome, email, senha, confirmarSenha, empresa } = dataUser;
 
     if (!nome || !email || !senha || !confirmarSenha || !empresa) {
-      alert('Todos os campos são obrigatórios.');
+      Alert.alert('Erro', 'Todos os campos são obrigatórios.');
       return;
     }
 
     if (senha.length < 6) {
-      alert('A senha deve ter pelo menos 6 caracteres.');
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
     if (senha !== confirmarSenha) {
-      alert('As senhas não são idênticas.');
+      Alert.alert('Erro', 'As senhas não são idênticas.');
       return;
     }
 
@@ -52,34 +53,42 @@ const SignUp = ({ setLogado, auth, setNewUser, db }) => {
         email
       )
     ) {
-      alert('Por favor, insira um email válido.');
+      Alert.alert('Erro', 'Por favor, insira um email válido.');
       return;
     }
 
-    auth
-      .createUserWithEmailAndPassword(email, senha)
-      .then((user) => {
-        setLogado(user)
-        saveUserToDataBase(nome, email, empresa, user.user.uid)
-      })
-      .catch((error) => {
-        let errorMessage;
-        try {
-          const errorObject = JSON.parse(error.message);
-          errorMessage = errorObject.error.message;
-        } catch (e) {
-          errorMessage = error.message;
-        }
-        alert(errorMessage);
-      });
+    try {
+      const user = await auth.createUserWithEmailAndPassword(email, senha);
+      setLogado(user);
+      await saveUserToDataBase(nome, email, empresa, user.user.uid);
+    } catch (error) {
+      let errorMessage;
+      try {
+        const errorObject = JSON.parse(error.message);
+        errorMessage = errorObject.error.message;
+      } catch (e) {
+        errorMessage = error.message;
+      }
+      Alert.alert('Falha ao Cadastrar', errorMessage, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Tentar Novamente', onPress: () => createUser() }
+      ]);
+    }
   };
 
-  const saveUserToDataBase = (nome, email, empresa, uid) => {
-    db.ref(`users/${uid}`).set({
-      nomeCompleto: nome,
-      email: email,
-      empresa: empresa,
-    });
+  const saveUserToDataBase = async (nome, email, empresa, uid) => {
+    try {
+      await db.ref(`users/${uid}`).set({
+        nomeCompleto: nome,
+        email: email,
+        empresa: empresa,
+      });
+    } catch (error) {
+      Alert.alert('Erro de Banco de Dados', 'Não foi possível salvar os dados do usuário.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Tentar Novamente', onPress: () => saveUserToDataBase(nome, email, empresa, uid) }
+      ]);
+    }
   };
 
   const handleSetData = (key, value) => {

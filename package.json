@@ -1,5 +1,5 @@
 {
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -7,13 +7,13 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~48.0.21",
-    "expo-status-bar": "~1.4.4",
+    "expo": "~51.0.8",
+    "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
-    "react-native": "0.71.14",
+    "react-native": "0.74.1",
     "firebase": "5.9.1",
     "lodash.debounce": "",
-    "@expo/vector-icons": "^13.0.0",
+    "@expo/vector-icons": "^14.0.0",
     "react-native-paper": "4.9.2",
     "react-native-screens": "~3.18.0",
     "@react-navigation/core": "3.0.0",

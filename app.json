@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "smartsuplify",
-    "slug": "snack-a7f433a6-b109-43af-862e-439e14fd4971",
+    "slug": "snack-4a10dc22-7e30-43f8-a8ba-5223ca449f77",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,9 +11,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
       "supportsTablet": true
     },

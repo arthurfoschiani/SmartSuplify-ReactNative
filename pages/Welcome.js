@@ -10,8 +10,6 @@ import {
 } from 'react-native';
 import { useState, useEffect } from 'react';
 
-const windowWidth = Dimensions.get('window').width;
-
 const Welcome = ({ route, navigation }) => {
   const { db, logOffUser, auth } = route.params;
   const [dataUser, setDataUser] = useState({

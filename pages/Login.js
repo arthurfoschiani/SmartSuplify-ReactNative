@@ -1,13 +1,5 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useState } from 'react';
-import InputField from '../components/InputField';
 import Form from '../components/Form';
 
 const loginFields = [
@@ -25,6 +17,25 @@ const Login = ({ setLogado, auth, setNewUser }) => {
   const [password, setPassword] = useState('');
 
   const logUser = () => {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Todos os campos são obrigatórios.');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (
+      !/^[a-zA-Z0-9._+]+@[a-zA-Z0-9_]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2})?$/.test(
+        email
+      )
+    ) {
+      Alert.alert('Erro', 'Por favor, insira um email válido.');
+      return;
+    }
+
     auth
       .signInWithEmailAndPassword(email, password)
       .then((user) => setLogado(user))
@@ -36,27 +47,11 @@ const Login = ({ setLogado, auth, setNewUser }) => {
         } catch (e) {
           errorMessage = error.message;
         }
-        alert(errorMessage);
+        Alert.alert('Erro de Login', errorMessage, [
+          { text: 'OK' },
+          { text: 'Tentar Novamente', onPress: () => logUser() },
+        ]);
       });
-  };
-
-  const showConfirmationAlert = () => {
-    Alert.alert(
-      'Confirmação',
-      'Você deseja realizar esta ação?',
-      [
-        {
-          text: 'Cancelar',
-          onPress: () => console.log('Cancelado'),
-          style: 'cancel',
-        },
-        {
-          text: 'Confirmar',
-          onPress: () => console.log('Confirmado'),
-        },
-      ],
-      { cancelable: true }
-    );
   };
 
   return (
@@ -68,7 +63,6 @@ const Login = ({ setLogado, auth, setNewUser }) => {
         setEmail={setEmail}
         password={password}
         setPassword={setPassword}
-        showConfirmationAlert={showConfirmationAlert}
         setNewUser={setNewUser}
       />
     </View>
@@ -92,7 +86,6 @@ const LoginSection = ({
   setEmail,
   password,
   setPassword,
-  showConfirmationAlert,
   setNewUser,
 }) => (
   <View style={styles.modalLogin}>
@@ -102,10 +95,7 @@ const LoginSection = ({
       password={password}
       setPassword={setPassword}
     />
-    <TouchableOpacity
-      style={styles.button}
-      onLongPress={showConfirmationAlert}
-      onPress={logUser}>
+    <TouchableOpacity style={styles.button} onPress={logUser}>
       <Text style={styles.buttonText}>Login</Text>
     </TouchableOpacity>
     <TouchableOpacity onPress={() => setNewUser(true)}>

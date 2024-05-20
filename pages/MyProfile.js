@@ -20,9 +20,24 @@ const updateUserDataFields = [
 ];
 
 const updateSenhaFields = [
-  { key: 'senhaAtual', label: 'Senha atual', placeholder: '**********', secureTextEntry: true },
-  { key: 'senha', label: 'Nova Senha', placeholder: '**********', secureTextEntry: true },
-  { key: 'confirmarSenha', label: 'Confirmar Senha', placeholder: '**********', secureTextEntry: true },
+  {
+    key: 'senhaAtual',
+    label: 'Senha atual',
+    placeholder: '**********',
+    secureTextEntry: true,
+  },
+  {
+    key: 'senha',
+    label: 'Nova Senha',
+    placeholder: '**********',
+    secureTextEntry: true,
+  },
+  {
+    key: 'confirmarSenha',
+    label: 'Confirmar Senha',
+    placeholder: '**********',
+    secureTextEntry: true,
+  },
 ];
 
 const MyProfile = ({ route }) => {
@@ -41,19 +56,20 @@ const MyProfile = ({ route }) => {
     getUserFromDataBase();
   }, []);
 
-  getUserFromDataBase = () => {
-    const currentUser = auth.currentUser;
-
-    db.ref(`users/${currentUser.uid}`).once('value', (snapshot) => {
+  const getUserFromDataBase = async () => {
+    try {
+      const snapshot = await db.ref(`users/${currentUser.uid}`).once('value');
       setDataUser({
         nome: snapshot.val().nomeCompleto,
         email: snapshot.val().email,
         empresa: snapshot.val().empresa,
       });
-    });
+    } catch (error) {
+      Alert.alert('Erro', 'Falha ao carregar dados do usuário.');
+    }
   };
 
-  const updateUserInDataBase = () => {
+  const updateUserInDataBase = async () => {
     const { nome, email } = dataUser;
 
     if (
@@ -61,60 +77,65 @@ const MyProfile = ({ route }) => {
         email
       )
     ) {
-      alert('Por favor, insira um email válido.');
+      Alert.alert('Erro', 'Por favor, insira um email válido.');
       return;
     }
 
-    db.ref(`users/${currentUser.uid}`)
-      .update({
+    try {
+      await db.ref(`users/${currentUser.uid}`).update({
         nomeCompleto: nome,
         email: email,
-      })
-      .then(() => {
-        alert('Seus dados foram atualizados com sucesso!');
-      })
-      .catch((error) => {
-        alert('Não foi possível atualizar seus dados.');
       });
+      Alert.alert('Sucesso', 'Seus dados foram atualizados com sucesso!');
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível atualizar seus dados.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Tentar Novamente', onPress: updateUserInDataBase },
+      ]);
+    }
   };
 
   const changePassword = async () => {
     const { senhaAtual, senha, confirmarSenha } = dataUser;
 
     if (!senha || !confirmarSenha || !senhaAtual) {
-      alert('Todos os campos são obrigatórios.');
+      Alert.alert('Erro', 'Todos os campos são obrigatórios.');
       return;
     }
 
-    const isReauthenticated = await reauthenticate(senhaAtual);
-    if (!isReauthenticated) {
-      alert('Senha atual incorreta.');
+    if (!(await reauthenticate(senhaAtual))) {
+      Alert.alert('Erro', 'Senha atual incorreta.');
       return;
     }
 
     if (senha === senhaAtual) {
-      alert('A nova senha deve ser diferente da atual.');
+      Alert.alert('Erro', 'A nova senha deve ser diferente da atual.');
       return;
     }
 
     if (senha.length < 6) {
-      alert('A senha deve ter pelo menos 6 caracteres.');
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
     if (senha !== confirmarSenha) {
-      alert('As senhas não são idênticas.');
+      Alert.alert('Erro', 'As senhas não são idênticas.');
       return;
     }
 
-    currentUser
-      .updatePassword(senha)
-      .then(() => {
-        alert('Senha atualizada com sucesso!');
-      })
-      .catch((error) => {
-        alert('Falha ao atualizar senha. Tente novamente mais tarde.');
-      });
+    try {
+      await currentUser.updatePassword(senha);
+      Alert.alert('Sucesso', 'Senha atualizada com sucesso!');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        'Falha ao atualizar senha. Tente novamente mais tarde.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Tentar Novamente', onPress: changePassword },
+        ]
+      );
+    }
   };
 
   const reauthenticate = async (currentPassword) => {
@@ -140,28 +161,27 @@ const MyProfile = ({ route }) => {
           onPress: () => console.log('Cancelado'),
           style: 'cancel',
         },
-        { text: 'Deletar', onPress: () => confirmDeleteAccount() },
+        { text: 'Deletar', onPress: confirmDeleteAccount },
       ],
       { cancelable: false }
     );
   };
 
-  const confirmDeleteAccount = () => {
-    db.ref(`users/${currentUser.uid}`)
-      .remove()
-      .then(() => {
-        currentUser
-          .delete()
-          .then(() => {
-            alert('Conta deletada com sucesso.');
-          })
-          .catch((error) => {
-            alert('Erro ao deletar conta. Tente novamente mais tarde.');
-          });
-      })
-      .catch((error) => {
-        alert('Erro ao remover dados do usuário.');
-      });
+  const confirmDeleteAccount = async () => {
+    try {
+      await db.ref(`users/${currentUser.uid}`).remove();
+      await currentUser.delete();
+      Alert.alert('Sucesso', 'Conta deletada com sucesso.');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        'Erro ao deletar conta. Tente novamente mais tarde.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Tentar Novamente', onPress: confirmDeleteAccount },
+        ]
+      );
+    }
   };
 
   return (
